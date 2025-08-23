@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cyber Security Login — Rotating Globe</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050914; --panel:#0b142a;
+    --neon:#00fff0; --neon2:#7c4dff;
+    --txt:#cfe9ff; --grid:rgba(0,255,240,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;width:100%}
+  body{
+    font-family:"Share Tech Mono",monospace;
+    color:var(--txt);
+    background:var(--bg);
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  #globeCanvas{
+    position:fixed;top:0;left:0;
+    width:100%;height:100%;z-index:-3
+  }
+
+  /* Grid & Stars Background */
+  .grid::before,.grid::after{
+    content:"";position:fixed;inset:0;z-index:-2;
+    background:repeating-linear-gradient(0deg,var(--grid) 0 1px,transparent 1px 38px),
+               repeating-linear-gradient(90deg,var(--grid) 0 1px,transparent 1px 38px);
+    transform:perspective(800px) rotateX(45deg) translateY(15vh);
+    animation:gridMove 18s linear infinite;}
+  .grid::after{opacity:.25;animation-duration:30s}
+  @keyframes gridMove{to{background-position:40px 40px,40px 40px}}
+
+  .stars,.stars2{position:fixed;inset:0;z-index:-1}
+  .stars:after,.stars2:after{content:"";position:absolute;top:-2000px;
+    box-shadow:2vw 10vh #fff8,30vw 40vh #fff6,60vw 15vh #fff7;
+    width:2px;height:2px;animation:fall 35s linear infinite;}
+  .stars2:after{animation-duration:55s;opacity:.6}
+  @keyframes fall{to{transform:translateY(2200px)}}
+
+  /* Center Wrapper */
+  .wrap{
+    position:relative;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-height:100vh;
+    padding:16px;
+  }
+
+  .card{
+    width:100%;
+    max-width:420px;
+    border-radius:24px;
+    background:rgba(5,10,20,0.75);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.12);
+    padding:28px 22px;
+  }
+
+  .title{
+    text-align:center;margin-bottom:20px;
+    font-family:"Orbitron",sans-serif;
+    text-shadow:0 0 14px rgba(124,77,255,.4);
+    font-size:1.4rem;
+  }
+
+  .field{position:relative;margin:12px 0}
+  .input{
+    width:100%;padding:14px 14px 14px 42px;
+    background:rgba(5,12,28,.9);
+    border:1px solid rgba(0,255,240,.35);
+    color:var(--txt);
+    border-radius:12px;
+    font-size:1rem;
+  }
+  .input::placeholder{color:#9ad9ff88}
+  .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%)}
+  .btn{
+    width:100%;padding:14px;margin-top:8px;border:0;border-radius:12px;
+    font-weight:800;
+    background:linear-gradient(90deg,var(--neon2),var(--neon));
+    color:#02040a;font-size:1rem;
+  }
+
+  /* Mobile Adjustments */
+  @media (max-width:480px){
+    .card{padding:20px 16px;border-radius:18px}
+    .title{font-size:1.1rem}
+    .input{padding:12px 12px 12px 38px;font-size:0.9rem}
+    .btn{padding:12px;font-size:0.9rem}
+  }
+</style>
+</head>
+<body>
+<canvas id="globeCanvas"></canvas>
+<div class="grid"></div><div class="stars"></div><div class="stars2"></div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="title">CYBER ACCESS NODE</div>
+    <form id="loginForm" action="/login" method="POST">
+      <div class="field">
+        <span class="ico">👤</span>
+        <input name="username" class="input" type="text" placeholder="USERNAME" required>
+      </div>
+      <div class="field">
+        <span class="ico">🔒</span>
+        <input name="password" class="input" type="password" placeholder="PASSWORD" required>
+      </div>
+      <button class="btn" type="submit">ACCESS</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script>
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('globeCanvas'), alpha:true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// 📱 Adjust camera distance based on screen size
+function updateCamera() {
+    if (window.innerWidth <= 480) {
+        camera.position.z = 3.2;  // farther on mobile
+    } else if (window.innerWidth <= 768) {
+        camera.position.z = 2.6;  // tablet
+    } else {
+        camera.position.z = 2;    // desktop
+    }
+}
+updateCamera();
+
+// === Globe Wireframe ===
+let geo = new THREE.SphereGeometry(0.9, 64, 64);
+let mat = new THREE.ShaderMaterial({
+    uniforms: {
+        time: { value: 0.0 },
+        baseColor: { value: new THREE.Color(0x00fff0) }, 
+        scanColor: { value: new THREE.Color(0x7c4dff) }
+    },
+    transparent: true,
+    wireframe: true,
+    vertexShader: `
+        varying vec3 vPos;
+        void main() {
+            vPos = position;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `,
+    fragmentShader: `
+        uniform float time;
+        uniform vec3 baseColor;
+        uniform vec3 scanColor;
+        varying vec3 vPos;
+        void main() {
+            float scanY = sin(time * 0.8) * 0.9;  
+            float dist = smoothstep(0.05, 0.0, abs(vPos.y - scanY));
+            vec3 color = mix(baseColor, scanColor, dist);
+            gl_FragColor = vec4(color, 0.8);
+        }
+    `
+});
+let sphere = new THREE.Mesh(geo, mat);
+scene.add(sphere);
+
+// Glow Halo
+let glowGeo = new THREE.SphereGeometry(0.92, 64, 64);
+let glowMat = new THREE.MeshBasicMaterial({
+    color: 0x00fff0, transparent: true, opacity: 0.08
+});
+let glowSphere = new THREE.Mesh(glowGeo, glowMat);
+scene.add(glowSphere);
+
+// Animate
+function animate(){
+    requestAnimationFrame(animate);
+    sphere.rotation.y += 0.01;
+    glowSphere.rotation.y += 0.01;
+    mat.uniforms.time.value += 0.03;
+    renderer.render(scene, camera);
+}
+animate();
+
+// Resize
+window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    updateCamera(); // 🔥 adjust again on resize
+});
+</script>
+
+</body>
+</html>

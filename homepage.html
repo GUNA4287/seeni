@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyber Portal — Dashboard</title>
+
+<!-- Bootstrap 5 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  body, html {
+    margin: 0;
+    height: 100%;
+    font-family: "Orbitron", sans-serif;
+    color: #cfe9ff;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* 3D Animated Background */
+  #bgCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -3;
+  }
+
+  header {
+    padding: 20px;
+    background: linear-gradient(90deg, #7c4dff, #00fff0);
+    text-align: center;
+    color: #02040a;
+    font-weight: bold;
+    font-size: 1.5em;
+    border-bottom: 2px solid #00fff0;
+  }
+
+  /* Flip Card */
+  .flip-card {
+    perspective: 1000px;
+  }
+  .flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+  }
+  .flip-card:hover .flip-card-inner {
+    transform: rotateY(180deg);
+  }
+  .flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+  }
+
+  /* Front */
+  .flip-card-front {
+    background: rgba(5, 12, 28, 0.6);
+    border: 1px solid rgba(0,255,240,0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .flip-card-front h2 {
+    color: #00fff0;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px #00fff0;
+  }
+
+  /* Back */
+  .flip-card-back {
+    background: linear-gradient(135deg,#7c4dff,#00fff0);
+    color: #02040a;
+    transform: rotateY(180deg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .flip-card-back button {
+    background: #02040a;
+    border: none;
+    color: #00fff0;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+  }
+  .flip-card-back button:hover {
+    background: #00fff0;
+    color: #02040a;
+  }
+</style>
+</head>
+<body>
+
+<!-- 3D Background Canvas -->
+<canvas id="bgCanvas"></canvas>
+
+<header>
+  <img src="data/main_logo.png" alt="Portal Logo" 
+       style="height:60px; width:60px; border-radius:50%; object-fit:cover; margin-right:15px; vertical-align:middle;">
+  Welcome to Cyber Access Portal
+</header>
+
+
+<main class="container my-5">
+  <div class="row g-4">
+    
+    <!-- New Record -->
+    <div class="col-md-4 col-sm-6">
+      <div class="flip-card">
+        <div class="flip-card-inner">
+          <div class="flip-card-front">
+            <h2>New Record</h2>
+            <p>Register a new employee into the system</p>
+          </div>
+          <div class="flip-card-back">
+            <button data-bs-toggle="modal" data-bs-target="#accessKeyModal" data-action="register.html">Register Employee</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Records -->
+    <div class="col-md-4 col-sm-6">
+      <div class="flip-card">
+        <div class="flip-card-inner">
+          <div class="flip-card-front">
+            <h2>View Records</h2>
+            <p>See all employee details in one place</p>
+          </div>
+          <div class="flip-card-back">
+            <button data-bs-toggle="modal" data-bs-target="#accessKeyModal" data-action="view.html">View Employees</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Record -->
+    <div class="col-md-4 col-sm-6">
+      <div class="flip-card">
+        <div class="flip-card-inner">
+          <div class="flip-card-front">
+            <h2>Delete Record</h2>
+            <p>Remove employee details from the system</p>
+          </div>
+          <div class="flip-card-back">
+            <button data-bs-toggle="modal" data-bs-target="#accessKeyModal" data-action="delete.html">Delete Employee</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- 🔑 Access Key Modal -->
+<div class="modal fade" id="accessKeyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border border-info">
+      <div class="modal-header">
+        <h5 class="modal-title text-info">Access Key Required</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="password" class="form-control mb-3" placeholder="Enter Access Key" id="accessKeyInput">
+        <button class="btn btn-info w-100" id="accessBtn">Access</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+let targetPage = null;
+
+// Capture which button opened modal
+document.querySelectorAll('[data-bs-target="#accessKeyModal"]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    targetPage = btn.getAttribute("data-action");
+  });
+});
+
+// 🔑 Call backend to verify key
+async function checkAccess() {
+  const key = document.getElementById("accessKeyInput").value;
+
+  try {
+    let res = await fetch("http://127.0.0.1:8000/api/check-key", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key })
+    });
+    let data = await res.json();
+
+    if(data.ok){
+      
+      window.location.href = targetPage;  // ✅ redirect if valid
+    } else {
+      alert("❌ Invalid Access Key!");
+    }
+  } catch (err) {
+    alert("⚠️ Server error! Make sure backend is running.");
+    console.error(err);
+  }
+}
+
+// Bind access button
+document.getElementById("accessBtn").addEventListener("click", checkAccess);
+</script>
+
+
+<!-- 🌐 Three.js Background Globe -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script>
+  let scene = new THREE.Scene();
+  let camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+  let renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bgCanvas'), alpha:false }); 
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  // 🔥 Background black
+  renderer.setClearColor(0x000000, 1);  
+  camera.position.z = 5;
+
+  // 🌐 Cyber Grid Sphere
+  let geo = new THREE.SphereGeometry(2, 64, 64);
+  let mat = new THREE.MeshBasicMaterial({
+      color: 0x00fff0,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.25
+  });
+  let sphere = new THREE.Mesh(geo, mat);
+  scene.add(sphere);
+
+  // ✨ Floating Particles
+  let particles = new THREE.Points(
+    new THREE.BufferGeometry().setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(
+        Array.from({length: 3000}, () => (Math.random() - 0.5) * 80),
+        3
+      )
+    ),
+    new THREE.PointsMaterial({ color: 0x7c4dff, size: 0.05 })
+  );
+  scene.add(particles);
+
+  // 🎬 Animate
+  function animate(){
+    requestAnimationFrame(animate);
+
+    // rotate globe & particles
+    sphere.rotation.y += 0.008;
+    particles.rotation.y += 0.001;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // Resize
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+
+
+</body>
+</html>

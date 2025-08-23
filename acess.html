@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Scan</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #00ffcc;
+      font-family: 'Courier New', Courier, monospace;
+      overflow: hidden;
+    }
+    .scan-header {
+      text-align: center;
+      padding: 20px;
+      font-size: 1.5rem;
+      color: #0ff;
+      border-bottom: 1px solid #0ff;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      background-color: #000;
+      z-index: 10;
+    }
+    .terminal-box {
+      margin-top: 70px;
+      padding: 20px;
+      height: 60vh;
+      overflow-y: hidden;
+      background-color: #111;
+      border: 2px solid #0ff;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 0 20px #0ff;
+    }
+    .line {
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    .progress-container {
+      width: 90%;
+      margin: 20px auto 0;
+      text-align: center;
+    }
+    .progress {
+      height: 25px;
+      background-color: #222;
+      border: 1px solid #0ff;
+    }
+    .progress-bar {
+      background: linear-gradient(90deg, #00ffff, #0077ff);
+    }
+    .percentage {
+      margin-top: 5px;
+      color: #0ff;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="scan-header">🔒 SCANNING & PROTECTING NETWORK CONNECTION...</div>
+  <div class="terminal-box" id="terminal"></div>
+  <div class="progress-container">
+    <div class="progress">
+      <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+    </div>
+    <div class="percentage" id="percentageText">0%</div>
+  </div>
+
+  <script>
+    // Define Ngrok URL in one place
+    const ngrokURL = 'http://dcdy78hid98x8.ngrok-free-app';
+
+    const lines = [
+      "[INFO] Initializing terminal interface...",
+      "[SCAN] Local IP address: 192.168.1.101",
+      "[SCAN] External IP resolved: 103.27.104.13",
+      "[CHECK] DNS lookup initiated...",
+      "[SUCCESS] DNS resolved: ngrok-free-app",
+      "[INFO] Loading firewall rules...",
+      "[INFO] Rule loaded: Allow 443/tcp",
+      "[INFO] Rule loaded: Allow 80/tcp",
+      "[NETWORK] Ethernet: Connected",
+      "[NETWORK] Wi-Fi: Scanning nearby networks...",
+      "[FOUND] Network: HomeWiFi (secured)",
+      "[FOUND] Network: JioFiber_Guest (open)",
+      "[SECURITY] Checking SSL certificates...",
+      "[VALID] Certificate: *.ngrok-free.app [OK]",
+      "[AUTH] Validating handshake...",
+      "[OK] Handshake completed successfully.",
+      "[ROUTER] Ping to 192.168.1.1 successful.",
+      "[PING] google.com: 16ms",
+      "[TRACE] Starting trace to ngrok...",
+      "[HOP 1] 192.168.1.1",
+      "[HOP 2] 10.10.23.1",
+      "[HOP 3] 172.217.24.14",
+      "[CHECK] Ngrok tunnel resolution...",
+      `[FOUND] Tunnel endpoint: ${ngrokURL.replace('http://', '')}`,
+      "[INFO] Tunnel running on port 8000",
+      "[INFO] Verifying TCP handshake to localhost:8000",
+      "[ATTEMPT] Connecting to 127.0.0.1:8000",
+      "[FAIL] Connection refused. Target may be offline.",
+      "[WARNING] HTTP GET failed with error: dial tcp [::1]:8000",
+      "[ADVICE] Ensure local server is running.",
+      "[MONITOR] Re-attempting connection...",
+      "[WAIT] Retrying in 3 seconds...",
+    ];
+
+    const terminal = document.getElementById("terminal");
+    let index = 0;
+
+    function typeNextLine() {
+      if (index < lines.length) {
+        const line = document.createElement("div");
+        line.className = "line";
+        line.textContent = lines[index];
+        terminal.appendChild(line);
+        terminal.scrollTop = terminal.scrollHeight;
+        index++;
+        const progressValue = Math.min((index / lines.length) * 100, 100);
+        document.getElementById("progressBar").style.width = progressValue + "%";
+        document.getElementById("percentageText").innerText = Math.floor(progressValue) + "%";
+      }
+    }
+
+    const typingInterval = setInterval(() => {
+      typeNextLine();
+    }, 200);
+
+    setTimeout(() => {
+      clearInterval(typingInterval);
+      document.getElementById("progressBar").style.width = "100%";
+      document.getElementById("percentageText").innerText = "100%";
+      checkServer();
+    }, 10000);
+
+    // Server check using the ngrokURL variable
+    function checkServer() {
+      fetch(`${ngrokURL}/homepage.html`, { mode: 'no-cors' })
+        .then(() => {
+          window.location.href = `${ngrokURL}/homepage.html`;
+        })
+        .catch(() => {
+          localStorage.setItem("serverStatus", "Ngrok is live, but the LOCAL server refused connection (port 8000 might be down).");
+          window.location.href = 'homepage.html';
+        });
+
+      setTimeout(() => {
+        localStorage.setItem("serverStatus", "Timeout: Unable to connect. Local server may be offline or Ngrok not running.");
+        window.location.href = 'homepage.html';
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
